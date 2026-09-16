@@ -1,0 +1,2267 @@
+<!doctype html>
+<!-- saved from url=(0037)https://smartphonefortrpg.vercel.app/ -->
+<html lang="ko">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+    <title>TRPG 스마트폰 툴</title>
+    <script src="./index_files/firebase-app.js.다운로드"></script>
+    <script src="./index_files/firebase-database.js.다운로드"></script>
+    <style>
+      body {
+        background-color: #121212;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        font-family: "Malgun Gothic", sans-serif;
+      }
+
+      .phone-frame {
+        width: 360px;
+        height: 640px;
+        background-color: #000;
+        border-radius: 40px;
+        border: 12px solid #222;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
+      }
+
+      /* 부팅 화면 */
+      #bootScreen {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #000;
+        color: white;
+        z-index: 999;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        transition: opacity 0.8s ease;
+      }
+      .boot-logo {
+        font-size: 50px;
+        margin-bottom: 25px;
+        animation: pulse 1.5s infinite;
+      }
+      .session-input-box {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        width: 80%;
+        text-align: center;
+      }
+      .session-input-box input,
+      .session-input-box select {
+        padding: 12px;
+        border-radius: 12px;
+        border: 1px solid #444;
+        outline: none;
+        font-size: 13px;
+        text-align: center;
+        background: #111;
+        color: white;
+        box-sizing: border-box;
+      }
+      .session-input-box button {
+        padding: 12px;
+        background: #fff;
+        color: black;
+        border: none;
+        border-radius: 12px;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+          opacity: 0.8;
+        }
+        50% {
+          transform: scale(1.08);
+          opacity: 1;
+        }
+        100% {
+          transform: scale(1);
+          opacity: 0.8;
+        }
+      }
+
+      /* 상단바 */
+      .status-bar {
+        height: 30px;
+        background-color: #f5f5f7;
+        color: #111;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 14px;
+        font-size: 11px;
+        font-weight: bold;
+        cursor: pointer;
+        user-select: none;
+        z-index: 200;
+        position: relative;
+        border-bottom: 1px solid #e5e5ea;
+      }
+      .status-right {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        font-size: 10px;
+        color: #666;
+      }
+
+      /* 상단바 드롭다운 퀵 설정 패널 */
+      .quick-panel {
+        position: absolute;
+        top: -330px;
+        left: 0;
+        width: 100%;
+        height: 330px;
+        background: rgba(255, 255, 255, 0.96);
+        backdrop-filter: blur(10px);
+        color: #111;
+        z-index: 150;
+        transition: top 0.3s ease;
+        padding: 15px;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        border-bottom-left-radius: 20px;
+        border-bottom-right-radius: 20px;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        border-bottom: 1px solid #ddd;
+      }
+      .quick-panel.open {
+        top: 30px;
+      }
+      .quick-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        text-align: center;
+      }
+      .quick-btn {
+        background: #f0f0f2;
+        border: none;
+        border-radius: 12px;
+        padding: 10px 4px;
+        color: #111;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        font-size: 11px;
+        transition: 0.2s;
+      }
+      .quick-btn.active {
+        background: #0a84ff;
+        color: white;
+      }
+      .quick-btn span:first-child {
+        font-size: 16px;
+      }
+
+      .quick-action-row {
+        display: flex;
+        gap: 6px;
+      }
+      .quick-action-btn {
+        flex: 1;
+        padding: 10px;
+        border-radius: 10px;
+        text-align: center;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 11px;
+        color: white;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+      }
+      .btn-save-action {
+        background: #34c759;
+      }
+      .btn-reset-action {
+        background: #ff3b30;
+      }
+
+      .bgm-player-box {
+        background: #f0f0f2;
+        padding: 10px;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      .bgm-info {
+        font-size: 11px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: #333;
+      }
+      .bgm-controls {
+        display: flex;
+        gap: 5px;
+        justify-content: center;
+      }
+      .bgm-controls button {
+        background: #e0e0e0;
+        color: #111;
+        border: none;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 10px;
+        cursor: pointer;
+        font-weight: bold;
+      }
+
+      .screen {
+        flex: 1;
+        background-color: #ffffff;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        z-index: 10;
+      }
+
+      /* 홈 화면 */
+      .home-screen {
+        padding: 40px 20px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 25px;
+        text-align: center;
+        height: 100%;
+        align-content: start;
+        background: #ffffff;
+      }
+      .app-icon {
+        cursor: pointer;
+      }
+      .app-icon div {
+        width: 60px;
+        height: 60px;
+        border-radius: 18px;
+        margin: 0 auto 6px auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e5e5ea;
+        background: #f5f5f7;
+      }
+      .app-icon span {
+        font-size: 11px;
+        font-weight: bold;
+        color: #333;
+      }
+
+      .app-page {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #ffffff;
+        display: none;
+        flex-direction: column;
+        z-index: 20;
+      }
+      .app-header {
+        background-color: #f5f5f7;
+        color: #111;
+        padding: 12px 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: bold;
+        border-bottom: 1px solid #e5e5ea;
+        font-size: 13px;
+      }
+      .back-btn,
+      .header-action-btn {
+        cursor: pointer;
+        font-size: 13px;
+        color: #007aff;
+      }
+      .messenger-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background-color: #ffffff;
+        overflow-y: auto;
+      }
+      .section-title {
+        padding: 10px 15px 5px 15px;
+        font-size: 11px;
+        font-weight: bold;
+        color: #666;
+        background-color: #f9f9fb;
+        border-top: 1px solid #e5e5ea;
+        border-bottom: 1px solid #e5e5ea;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .friend-item,
+      .room-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 15px;
+        border-bottom: 1px solid #f0f0f2;
+      }
+      .item-left {
+        display: flex;
+        align-items: center;
+        flex: 1;
+        cursor: pointer;
+      }
+
+      .item-avatar {
+        width: 42px;
+        height: 42px;
+        background-color: #f0f0f2;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        margin-right: 12px;
+        flex-shrink: 0;
+        overflow: hidden;
+        border: 1px solid #e5e5ea;
+      }
+      .item-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .item-info .title {
+        font-weight: bold;
+        font-size: 13px;
+        color: #111;
+      }
+      .item-info .sub {
+        font-size: 11px;
+        color: #666;
+        margin-top: 2px;
+      }
+      .delete-btn {
+        background-color: #ff3b30;
+        color: white;
+        border: none;
+        padding: 5px 8px;
+        border-radius: 6px;
+        font-size: 11px;
+        cursor: pointer;
+      }
+
+      /* 채팅방 스타일 및 시간 표시 */
+      #chatRoomPage {
+        background-color: #ffffff;
+      }
+      .chat-content {
+        flex: 1;
+        padding: 15px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        background-color: #ffffff;
+      }
+      .chat-row-wrapper {
+        display: flex;
+        flex-direction: column;
+        max-width: 80%;
+        position: relative;
+      }
+      .chat-row-wrapper.me {
+        align-self: flex-end;
+        align-items: flex-end;
+      }
+      .chat-row-wrapper.other,
+      .chat-row-wrapper.gm {
+        align-self: flex-start;
+        align-items: flex-start;
+      }
+      .msg-name {
+        font-size: 11px;
+        color: #666;
+        margin-bottom: 3px;
+        font-weight: bold;
+      }
+      .msg-bubble-container {
+        display: flex;
+        align-items: flex-end;
+        gap: 5px;
+      }
+      .chat-row-wrapper.me .msg-bubble-container {
+        flex-direction: row-reverse;
+      }
+
+      .message-group {
+        display: flex;
+        align-items: flex-end;
+        gap: 5px;
+      }
+      .chat-row-wrapper.me .message-group {
+        flex-direction: row-reverse;
+      }
+
+      .message {
+        padding: 9px 13px;
+        border-radius: 14px;
+        font-size: 13px;
+        line-height: 1.4;
+        word-break: break-all;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      }
+      .chat-row-wrapper.other .message {
+        background-color: #f0f0f2;
+        color: #111;
+        border-top-left-radius: 4px;
+        border: 1px solid #e5e5ea;
+      }
+      .chat-row-wrapper.gm .message {
+        background-color: #f3e8ff;
+        border-top-left-radius: 4px;
+        border: 1px dashed #af52de;
+        color: #3b0764;
+      }
+      .chat-row-wrapper.me .message {
+        background-color: #007aff;
+        color: white;
+        border-top-right-radius: 4px;
+      }
+
+      .msg-time {
+        font-size: 9px;
+        color: #888;
+        white-space: nowrap;
+        margin-bottom: 2px;
+      }
+      .msg-del-btn {
+        background: none;
+        border: none;
+        color: #999;
+        font-size: 10px;
+        cursor: pointer;
+        padding: 2px 4px;
+        opacity: 0.7;
+        align-self: center;
+      }
+
+      .chat-bottom-bar {
+        background-color: #f5f5f7;
+        display: flex;
+        flex-direction: column;
+        border-top: 1px solid #e5e5ea;
+      }
+      .sender-select-bar {
+        padding: 6px 12px;
+        background-color: #f0f0f2;
+        display: flex;
+        gap: 6px;
+        font-size: 11px;
+        align-items: center;
+        border-bottom: 1px solid #e5e5ea;
+        color: #555;
+      }
+      .sender-select-bar select {
+        padding: 3px;
+        font-size: 11px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        max-width: 180px;
+        background: #fff;
+        color: #111;
+      }
+      .chat-input-bar {
+        padding: 9px 12px;
+        display: flex;
+        gap: 8px;
+      }
+      .chat-input-bar input {
+        flex: 1;
+        padding: 8px 12px;
+        border: 1px solid #ccc;
+        border-radius: 20px;
+        outline: none;
+        font-size: 13px;
+        background: #fff;
+        color: #111;
+      }
+      .chat-input-bar button {
+        background-color: #007aff;
+        color: white;
+        border: none;
+        padding: 0 16px;
+        border-radius: 20px;
+        font-weight: bold;
+        cursor: pointer;
+        font-size: 12px;
+      }
+
+      .phone-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background-color: #ffffff;
+        justify-content: space-between;
+        overflow: hidden;
+      }
+      .phone-tab-content {
+        flex: 1;
+        display: none;
+        flex-direction: column;
+        padding: 20px;
+        box-sizing: border-box;
+        overflow-y: auto;
+        align-items: center;
+        text-align: center;
+      }
+      .phone-tab-content.active {
+        display: flex;
+      }
+
+      .dial-display {
+        font-size: 22px;
+        font-weight: bold;
+        letter-spacing: 2px;
+        background: #f9f9fb;
+        color: #111;
+        padding: 10px 15px;
+        border-radius: 12px;
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid #ddd;
+        margin-bottom: 10px;
+      }
+      .dial-pad {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        width: 100%;
+        max-width: 220px;
+      }
+      .dial-key {
+        background: #f5f5f7;
+        border: 1px solid #e5e5ea;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        color: #111;
+      }
+      .call-action-btn {
+        background-color: #34c759;
+        color: white;
+        border: none;
+        border-radius: 25px;
+        padding: 10px 25px;
+        font-size: 13px;
+        font-weight: bold;
+        cursor: pointer;
+        margin-top: 12px;
+      }
+
+      .phone-tab-bar {
+        display: flex;
+        background: #f5f5f7;
+        border-top: 1px solid #e5e5ea;
+        height: 50px;
+      }
+      .phone-tab-btn {
+        flex: 1;
+        background: none;
+        border: none;
+        font-size: 11px;
+        font-weight: bold;
+        color: #888;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+      }
+      .phone-tab-btn.active {
+        color: #007aff;
+      }
+
+      .log-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        padding: 10px;
+        background: #f9f9fb;
+        border: 1px solid #e5e5ea;
+        border-radius: 10px;
+        margin-bottom: 6px;
+        text-align: left;
+      }
+      .log-info .name {
+        font-weight: bold;
+        font-size: 13px;
+        color: #111;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .log-info .time {
+        font-size: 10px;
+        color: #666;
+        margin-top: 2px;
+      }
+
+      .call-screen {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #f5f5f7;
+        color: #111;
+        display: none;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 40px 20px;
+        box-sizing: border-box;
+        z-index: 50;
+        text-align: center;
+      }
+      .call-profile-img {
+        width: 90px;
+        height: 90px;
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 50%;
+        margin: 40px auto 15px auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 40px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+      .call-profile-img img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .call-buttons {
+        display: flex;
+        justify-content: space-around;
+        width: 100%;
+        margin-bottom: 30px;
+      }
+      .call-btn {
+        width: 65px;
+        height: 65px;
+        border-radius: 50%;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+      }
+      .btn-accept {
+        background-color: #34c759;
+      }
+      .btn-reject {
+        background-color: #ff3b30;
+      }
+
+      /* 모달 공통 */
+      .modal-bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(2px);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 200;
+      }
+      .modal-box {
+        background-color: #ffffff;
+        color: #111;
+        width: 82%;
+        padding: 20px;
+        border-radius: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        max-height: 80%;
+        overflow-y: auto;
+        text-align: left;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        border: 1px solid #ddd;
+      }
+      .modal-box h3 {
+        margin: 0 0 5px 0;
+        font-size: 15px;
+        color: #111;
+      }
+      .modal-box input {
+        padding: 9px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        font-size: 12px;
+        background: #fff;
+        color: #111;
+        outline: none;
+        box-sizing: border-box;
+        width: 100%;
+      }
+      .modal-btns {
+        display: flex;
+        justify-content: flex-end;
+        gap: 6px;
+        margin-top: 8px;
+      }
+      .modal-btns button {
+        padding: 6px 14px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: bold;
+      }
+      .btn-confirm {
+        background-color: #007aff;
+        color: white;
+      }
+      .btn-cancel {
+        background-color: #e5e5ea;
+        color: #333;
+      }
+
+      /* 친구 프로필 카드 스타일 (카톡 스타일 팝업) */
+      .profile-modal-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 10px 0;
+        gap: 10px;
+      }
+      .profile-big-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: #f0f0f2;
+        border: 1px solid #ddd;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 36px;
+        overflow: hidden;
+        margin-bottom: 5px;
+      }
+      .profile-big-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .profile-name {
+        font-size: 16px;
+        font-weight: bold;
+        color: #111;
+      }
+      .profile-phone {
+        font-size: 12px;
+        color: #666;
+      }
+      .profile-status-box {
+        background: #f9f9fb;
+        border: 1px solid #e5e5ea;
+        border-radius: 10px;
+        padding: 10px;
+        width: 100%;
+        box-sizing: border-box;
+        font-size: 12px;
+        color: #333;
+        margin-top: 5px;
+      }
+
+      .avatar-tab-box {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 2px;
+      }
+      .avatar-tab-btn {
+        flex: 1;
+        padding: 6px;
+        font-size: 11px;
+        font-weight: bold;
+        background: #f0f0f2;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        cursor: pointer;
+        text-align: center;
+        color: #555;
+      }
+      .avatar-tab-btn.active {
+        background: #007aff;
+        color: white;
+        border-color: #007aff;
+      }
+      .avatar-input-section {
+        display: none;
+      }
+      .avatar-input-section.active {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="phone-frame">
+      <!-- 부팅 화면 -->
+      <div id="bootScreen">
+        <div class="boot-logo">☁️</div>
+        <div class="session-input-box">
+          <div style="font-size: 13px; font-weight: bold; margin-bottom: 4px">
+            TRPG 시스템 잠금 해제
+          </div>
+          <div id="authSection">
+            <input
+              type="password"
+              id="accessPasswordInput"
+              placeholder="접속 비밀번호 입력"
+              style="margin-bottom: 8px"
+            />
+            <button onclick="verifyPasswordAndLoadFolders()">
+              비밀번호 확인
+            </button>
+          </div>
+          <div id="folderSelectSection" style="display: none; text-align: left">
+            <div style="font-size: 11px; color: #aaa; margin-bottom: 4px">
+              기존 세션 폴더 선택:
+            </div>
+            <select
+              id="existingFolderSelect"
+              style="margin-bottom: 8px"
+            ></select>
+            <div style="display: flex; gap: 6px; margin-bottom: 10px">
+              <button
+                onclick="bootWithSelectedFolder()"
+                style="flex: 2; background: #34c759; color: white"
+              >
+                선택 폴더 접속
+              </button>
+              <button
+                onclick="deleteSelectedFolder()"
+                style="flex: 1; background: #ff3b30; color: white"
+              >
+                폴더 삭제
+              </button>
+            </div>
+            <div
+              style="
+                text-align: center;
+                margin-bottom: 6px;
+                font-size: 11px;
+                color: #777;
+              "
+            >
+              또는 새 폴더 생성
+            </div>
+            <input
+              type="text"
+              id="newFolderNameInput"
+              placeholder="새로운 폴더명 입력"
+              style="margin-bottom: 6px"
+            />
+            <button
+              onclick="bootWithNewFolder()"
+              style="background: #007aff; color: white"
+            >
+              새 폴더로 시작
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 상단바 -->
+      <div class="status-bar" onclick="toggleQuickPanel(event)">
+        <span id="clock">11:53</span>
+        <div class="status-right">
+          <span
+            id="currentSessionBadge"
+            style="
+              background: #e5e5ea;
+              padding: 1px 6px;
+              border-radius: 4px;
+              font-size: 9px;
+              color: #333;
+            "
+            >폴더: 기본</span
+          >
+          <span id="dbStatusIcon" title="연결됨">🟢</span>
+          <span>📶</span>
+          <span>🔋 100%</span>
+        </div>
+      </div>
+
+      <!-- 퀵 설정 패널 -->
+      <div id="quickPanel" class="quick-panel">
+        <div class="quick-grid">
+          <button
+            class="quick-btn active"
+            id="wifiBtn"
+            onclick="toggleSetting('wifi', event)"
+          >
+            <span>📶</span><span id="wifiText">Wi-Fi 켜짐</span>
+          </button>
+          <button
+            class="quick-btn active"
+            id="soundBtn"
+            onclick="toggleSetting('sound', event)"
+          >
+            <span>🔔</span><span id="soundText">벨소리</span>
+          </button>
+          <button
+            class="quick-btn"
+            id="dbCheckBtn"
+            onclick="checkDbConnectionPopup(event)"
+          >
+            <span>⚪</span><span>서버상태</span>
+          </button>
+        </div>
+        <div class="quick-action-row">
+          <button
+            class="quick-action-btn btn-save-action"
+            onclick="manualSaveSession(event)"
+          >
+            💾 데이터 저장
+          </button>
+          <button
+            class="quick-action-btn btn-reset-action"
+            onclick="resetSession(event)"
+          >
+            🔄 세션 재부팅
+          </button>
+        </div>
+        <div class="bgm-player-box">
+          <div class="bgm-info">
+            <span id="bgmTitle">🎵 BGM: [긴장감] 미지의 복도</span>
+            <span id="bgmStatus" style="color: #666">정지됨</span>
+          </div>
+          <audio
+            id="bgmAudio"
+            loop=""
+            src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf756.mp3?filename=suspense-ambient-111082.mp3"
+          ></audio>
+          <div class="bgm-controls">
+            <button onclick="changeBgmTrack(event)">곡 변경</button>
+            <button onclick="toggleBgmPlay(event)" id="bgmPlayBtn">재생</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="screen" onclick="closeQuickPanel()">
+        <!-- 홈 화면 -->
+        <div id="home" class="home-screen">
+          <div
+            class="app-icon messenger"
+            onclick="
+              openMessenger();
+              event.stopPropagation();
+            "
+          >
+            <div>💬</div>
+            <span>메신저</span>
+          </div>
+          <div
+            class="app-icon phone"
+            onclick="
+              openPhoneApp();
+              event.stopPropagation();
+            "
+          >
+            <div>📞</div>
+            <span>전화</span>
+          </div>
+        </div>
+
+        <!-- 메신저 앱 -->
+        <div id="messengerList" class="app-page">
+          <div class="app-header">
+            <span
+              class="back-btn"
+              onclick="
+                goHome();
+                event.stopPropagation();
+              "
+              >〈 홈</span
+            >
+            <span>메신저</span>
+            <span
+              class="header-action-btn"
+              onclick="
+                showAddModal();
+                event.stopPropagation();
+              "
+              >+ 친구추가</span
+            >
+          </div>
+          <div class="messenger-body">
+            <div class="section-title">
+              <span>단체 대화방</span>
+              <span
+                style="color: #007aff; cursor: pointer; font-weight: bold"
+                onclick="
+                  showGroupModal();
+                  event.stopPropagation();
+                "
+                >+ 단체방 만들기</span
+              >
+            </div>
+            <div id="groupRoomContainer"></div>
+            <div class="section-title"><span>1:1 친구 목록</span></div>
+            <div id="friendListContainer"></div>
+          </div>
+        </div>
+
+        <!-- 채팅방 화면 -->
+        <div id="chatRoomPage" class="app-page">
+          <div class="app-header">
+            <span
+              class="back-btn"
+              onclick="
+                backToList();
+                event.stopPropagation();
+              "
+              >〈 목록</span
+            >
+            <span id="roomTitle">채팅방</span>
+            <span
+              class="header-action-btn"
+              style="color: #ff3b30"
+              onclick="
+                deleteCurrentChatRoom();
+                event.stopPropagation();
+              "
+              >방 삭제</span
+            >
+            <span id="roomTitle">채팅방</span>
+            <span
+              class="header-action-btn"
+              style="color: #ff3b30"
+              onclick="
+                deleteCurrentChatRoom();
+                event.stopPropagation();
+              "
+              >방 삭제</span
+            >
+            <span
+              class="header-action-btn"
+              onclick="
+                toggleChatManageMode();
+                event.stopPropagation();
+              "
+              >채팅 내역 관리</span
+            >
+          </div>
+          <div class="chat-content" id="chatBox"></div>
+          <div class="chat-bottom-bar" onclick="event.stopPropagation()">
+            <div class="sender-select-bar">
+              <span>발신자:</span>
+              <select id="senderSelect"></select>
+            </div>
+            <div class="chat-input-bar">
+              <input
+                type="text"
+                id="msgInput"
+                placeholder="메시지를 입력하세요..."
+                onkeypress="checkEnter(event)"
+              />
+              <button onclick="sendMessage()">전송</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 전화 앱 -->
+        <div id="phonePage" class="app-page">
+          <div class="app-header">
+            <span
+              class="back-btn"
+              onclick="
+                goHome();
+                event.stopPropagation();
+              "
+              >〈 홈</span
+            >
+            <span id="phoneHeaderTitle">전화기 - 키패드</span>
+            <span
+              class="header-action-btn"
+              onclick="
+                triggerIncomingCall('[알 수 없음]', '010-0000-0000', '👤');
+                event.stopPropagation();
+              "
+              >수신테스트</span
+            >
+          </div>
+          <div class="phone-body" onclick="event.stopPropagation()">
+            <div id="phoneTabKeypad" class="phone-tab-content active">
+              <div>
+                <div style="font-size: 11px; color: #666; margin-bottom: 4px">
+                  번호 입력
+                </div>
+                <div id="dialDisplay" class="dial-display"></div>
+              </div>
+              <div class="dial-pad">
+                <div class="dial-key" onclick="pressDial('1')">1</div>
+                <div class="dial-key" onclick="pressDial('2')">2</div>
+                <div class="dial-key" onclick="pressDial('3')">3</div>
+                <div class="dial-key" onclick="pressDial('4')">4</div>
+                <div class="dial-key" onclick="pressDial('5')">5</div>
+                <div class="dial-key" onclick="pressDial('6')">6</div>
+                <div class="dial-key" onclick="pressDial('7')">7</div>
+                <div class="dial-key" onclick="pressDial('8')">8</div>
+                <div class="dial-key" onclick="pressDial('9')">9</div>
+                <div class="dial-key" onclick="pressDial('*')">*</div>
+                <div class="dial-key" onclick="pressDial('0')">0</div>
+                <div class="dial-key" onclick="pressDial('#')">#</div>
+              </div>
+              <button class="call-action-btn" onclick="makeCall()">
+                통화 걸기
+              </button>
+            </div>
+            <div
+              id="phoneTabContacts"
+              class="phone-tab-content"
+              style="align-items: stretch; text-align: left"
+            >
+              <div
+                style="
+                  font-size: 12px;
+                  font-weight: bold;
+                  color: #666;
+                  margin-bottom: 8px;
+                "
+              >
+                연락처 목록에서 통화하기
+              </div>
+              <div
+                id="phoneContactListContainer"
+                style="flex: 1; overflow-y: auto"
+              ></div>
+            </div>
+            <div
+              id="phoneTabLogs"
+              class="phone-tab-content"
+              style="align-items: stretch; text-align: left"
+            >
+              <div
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  margin-bottom: 8px;
+                "
+              >
+                <span style="font-size: 12px; font-weight: bold; color: #666"
+                  >최근 통화 기록</span
+                >
+                <span
+                  style="font-size: 10px; color: #007aff; cursor: pointer"
+                  onclick="clearCallLogs()"
+                  >기록 삭제</span
+                >
+              </div>
+              <div
+                id="callLogContainer"
+                style="flex: 1; overflow-y: auto"
+              ></div>
+            </div>
+          </div>
+          <div class="phone-tab-bar" onclick="event.stopPropagation()">
+            <button
+              class="phone-tab-btn active"
+              id="tabBtnKeypad"
+              onclick="switchPhoneTab('keypad')"
+            >
+              <span>⌨️</span>키패드
+            </button>
+            <button
+              class="phone-tab-btn"
+              id="tabBtnContacts"
+              onclick="switchPhoneTab('contacts')"
+            >
+              <span>📇</span>연락처
+            </button>
+            <button
+              class="phone-tab-btn"
+              id="tabBtnLogs"
+              onclick="switchPhoneTab('logs')"
+            >
+              <span>📋</span>통화기록
+            </button>
+          </div>
+        </div>
+
+        <!-- 통화 수신/발신 화면 -->
+        <div
+          id="callScreen"
+          class="call-screen"
+          onclick="event.stopPropagation()"
+        >
+          <div>
+            <div
+              id="callStatusText"
+              style="font-size: 14px; color: #666; margin-top: 10px"
+            >
+              연결 중...
+            </div>
+            <div class="call-profile-img" id="callAvatar">👤</div>
+            <div id="callTargetName" style="font-size: 20px; font-weight: bold">
+              상대방 이름
+            </div>
+            <div
+              id="callTargetPhone"
+              style="font-size: 13px; color: #666; margin-top: 5px"
+            >
+              010-XXXX-XXXX
+            </div>
+          </div>
+          <div class="call-buttons">
+            <button class="call-btn btn-reject" onclick="endCall()">📞</button>
+            <button
+              class="call-btn btn-accept"
+              id="acceptCallBtn"
+              style="display: none"
+              onclick="acceptCall()"
+            >
+              📞
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 모달창들 (친구 추가, 단체방, 프로필 팝업) -->
+      <div id="addModal" class="modal-bg">
+        <div class="modal-box" onclick="event.stopPropagation()">
+          <h3>새 친구 추가</h3>
+          <input type="text" id="newFriendName" placeholder="예: 목격자 김씨" />
+          <input type="text" id="newFriendPhone" value="010-" />
+          <div style="font-size: 11px; color: #666; margin-top: 4px">
+            프로필 설정 방식
+          </div>
+          <div class="avatar-tab-box">
+            <button
+              type="button"
+              class="avatar-tab-btn active"
+              id="tabEmojiBtn"
+              onclick="switchAvatarInputTab('emoji')"
+            >
+              이모지 입력
+            </button>
+            <button
+              type="button"
+              class="avatar-tab-btn"
+              id="tabFileBtn"
+              onclick="switchAvatarInputTab('file')"
+            >
+              파일 업로드
+            </button>
+          </div>
+          <div id="avatarEmojiSection" class="avatar-input-section active">
+            <input
+              type="text"
+              id="newFriendAvatarEmoji"
+              value="👤"
+              placeholder="이모지 입력 (예: 🕵️‍♂️)"
+            />
+          </div>
+          <div id="avatarFileSection" class="avatar-input-section">
+            <input
+              type="file"
+              id="newFriendImageFile"
+              accept="image/*"
+              style="
+                font-size: 11px;
+                padding: 5px;
+                background: #f9f9fb;
+                width: 100%;
+                box-sizing: border-box;
+              "
+            />
+          </div>
+          <input
+            type="text"
+            id="newFriendMsg"
+            placeholder="상태 메시지 (한마디 입력)"
+          />
+          <div class="modal-btns">
+            <button class="btn-cancel" onclick="closeAddModal()">취소</button>
+            <button class="btn-confirm" onclick="addNewFriend()">추가</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="groupModal" class="modal-bg">
+        <div class="modal-box" onclick="event.stopPropagation()">
+          <h3>단체 대화방 만들기</h3>
+          <input type="text" id="newGroupName" placeholder="예: 조우 대책반" />
+          <div
+            id="groupMemberCheckList"
+            style="
+              max-height: 100px;
+              overflow-y: auto;
+              border: 1px solid #ccc;
+              padding: 5px;
+              font-size: 12px;
+              background: #fff;
+              border-radius: 6px;
+            "
+          ></div>
+          <div class="modal-btns">
+            <button class="btn-cancel" onclick="closeGroupModal()">취소</button>
+            <button class="btn-confirm" onclick="createGroupRoom()">
+              생성
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 카톡 스타일 친구 프로필 팝업 모달 -->
+      <div id="profileModal" class="modal-bg" onclick="closeProfileModal()">
+        <div
+          class="modal-box"
+          onclick="event.stopPropagation()"
+          style="width: 75%; align-items: center"
+        >
+          <div class="profile-modal-content">
+            <div class="profile-big-avatar" id="popProfileAvatar">👤</div>
+            <div class="profile-name" id="popProfileName">친구 이름</div>
+            <div class="profile-phone" id="popProfilePhone">010-0000-0000</div>
+            <div class="profile-status-box" id="popProfileStatus">
+              상태 메시지가 없습니다.
+            </div>
+          </div>
+          <div
+            class="modal-btns"
+            style="width: 100%; justify-content: center; margin-top: 10px"
+          >
+            <button
+              class="btn-confirm"
+              style="width: 100%"
+              onclick="startChatFromProfile()"
+            >
+              1:1 채팅하기
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+            const firebaseConfig = {
+              apiKey: "AIzaSyAPny8ArMHrVzOK0Rxr64h5ZkC-8kTg0ro",
+              authDomain: "smartphonefortrpg.firebaseapp.com",
+              databaseURL: "https://smartphonefortrpg-default-rtdb.firebaseio.com",
+              projectId: "smartphonefortrpg",
+              storageBucket: "smartphonefortrpg.firebasestorage.app",
+              messagingSenderId: "273707827445",
+              appId: "1:273707827445:web:fd0db3806f62ba1b4545bc",
+              measurementId: "G-Q87R80TS4W",
+            };
+
+            if (!firebase.apps.length) {
+              firebase.initializeApp(firebaseConfig);
+            }
+            const db = firebase.database();
+            const MASTER_PASSWORD = "1234";
+
+            let currentSession = "default_session";
+            let friendsData = {};
+            let groupRoomsData = {};
+            let chatHistories = {};
+            let callLogsData = [];
+
+            let currentChatName = "";
+            let currentChatType = "";
+            let currentGroupMembers = [];
+            let viewingProfileFriend = null; // 현재 프로필 창에 띄워진 친구 정보
+
+            function verifyPasswordAndLoadFolders() {
+              let pwInput = document.getElementById("accessPasswordInput").value;
+              if (pwInput !== MASTER_PASSWORD) {
+                alert("비밀번호가 일치하지 않습니다!");
+                return;
+              }
+              document.getElementById("authSection").style.display = "none";
+              document.getElementById("folderSelectSection").style.display = "block";
+              loadFoldersIntoSelect();
+            }
+
+            function loadFoldersIntoSelect() {
+              let dbRef = db.ref("trpg_sessions");
+              dbRef.once("value", (snapshot) => {
+                let folders = snapshot.val() || {};
+                let selectBox = document.getElementById("existingFolderSelect");
+                selectBox.innerHTML = "";
+                let keys = Object.keys(folders);
+                if (keys.length === 0) {
+                  selectBox.innerHTML = `<option value="">저장된 폴더가 없습니다</option>`;
+                } else {
+                  keys.forEach((folderName) => {
+                    selectBox.innerHTML += `<option value="${folderName}">${folderName}</option>`;
+                  });
+                }
+              });
+            }
+
+            function deleteSelectedFolder() {
+              let selectBox = document.getElementById("existingFolderSelect");
+              let selectedFolder = selectBox.value;
+              if (!selectedFolder || selectedFolder === "") {
+                alert("삭제할 폴더를 선택해주세요!");
+                return;
+              }
+              if (
+                confirm(`정말로 [${selectedFolder}] 폴더를 영구 삭제하시겠습니까?`)
+              ) {
+                db.ref("trpg_sessions/" + selectedFolder)
+                  .remove()
+                  .then(() => {
+                    alert(`[${selectedFolder}] 폴더가 삭제되었습니다.`);
+                    loadFoldersIntoSelect();
+                  });
+              }
+            }
+
+            function bootWithSelectedFolder() {
+              let selectBox = document.getElementById("existingFolderSelect");
+              let selectedFolder = selectBox.value;
+              if (!selectedFolder || selectedFolder === "") {
+                alert("접속할 폴더를 선택해주세요!");
+                return;
+              }
+              startAppWithFolder(selectedFolder);
+            }
+
+            function bootWithNewFolder() {
+              let newFolderInput = document
+                .getElementById("newFolderNameInput")
+                .value.trim();
+              if (!newFolderInput) {
+                alert("새로운 폴더명을 입력해주세요!");
+                return;
+              }
+              startAppWithFolder(newFolderInput.replace(/[\.#$\[\]]/g, "_"));
+            }
+
+            function startAppWithFolder(folderName) {
+              currentSession = folderName;
+              document.getElementById("currentSessionBadge").innerText =
+                "폴더: " + currentSession;
+              let boot = document.getElementById("bootScreen");
+              boot.style.opacity = "0";
+              setTimeout(() => {
+                boot.style.display = "none";
+              }, 800);
+              initSessionListeners();
+            }
+
+            let currentAvatarMode = "emoji";
+            function switchAvatarInputTab(mode) {
+              currentAvatarMode = mode;
+              if (mode === "emoji") {
+                document.getElementById("tabEmojiBtn").classList.add("active");
+                document.getElementById("tabFileBtn").classList.remove("active");
+                document.getElementById("avatarEmojiSection").classList.add("active");
+                document
+                  .getElementById("avatarFileSection")
+                  .classList.remove("active");
+              } else {
+                document.getElementById("tabFileBtn").classList.add("active");
+                document.getElementById("tabEmojiBtn").classList.remove("active");
+                document.getElementById("avatarFileSection").classList.add("active");
+                document
+                  .getElementById("avatarEmojiSection")
+                  .classList.remove("active");
+              }
+            }
+
+            function resetSession(e) {
+              if (e) e.stopPropagation();
+              if (confirm("세션을 종료하고 다른 폴더로 부팅하시겠습니까?"))
+                location.reload();
+            }
+
+            function initSessionListeners() {
+              let sessionRef = db.ref("trpg_sessions/" + currentSession);
+              sessionRef.once("value", (snapshot) => {
+                if (!snapshot.val()) {
+                  sessionRef.set({ friends: {}, groups: {}, chats: {}, logs: [] });
+                }
+              });
+              sessionRef.on("value", (snapshot) => {
+                let data = snapshot.val() || {};
+                friendsData = data.friends || {};
+                groupRoomsData = data.groups || {};
+                chatHistories = data.chats || {};
+                callLogsData = data.logs || [];
+
+                renderMessengerMain();
+                renderPhoneContactsTab();
+                renderCallLogsTab();
+
+                if (
+                  document.getElementById("chatRoomPage").style.display === "flex" &&
+                  currentChatName
+                ) {
+                  reloadChatMessages();
+                  updateSenderSelectDropdown();
+                }
+              });
+            }
+
+            function saveDataToFirebase() {
+              db.ref("trpg_sessions/" + currentSession).set({
+                friends: friendsData,
+                groups: groupRoomsData,
+                chats: chatHistories,
+                logs: callLogsData,
+              });
+            }
+
+            function manualSaveSession(e) {
+              if (e) e.stopPropagation();
+              saveDataToFirebase();
+              alert(`[${currentSession}] 폴더에 현재 데이터가 저장되었습니다!`);
+            }
+
+            function toggleQuickPanel(e) {
+              if (e) e.stopPropagation();
+              document.getElementById("quickPanel").classList.toggle("open");
+            }
+            function closeQuickPanel() {
+              document.getElementById("quickPanel").classList.remove("open");
+            }
+
+            let settingsState = { wifi: true, sound: true };
+            function toggleSetting(type, e) {
+              if (e) e.stopPropagation();
+              settingsState[type] = !settingsState[type];
+              let btn = document.getElementById(type + "Btn");
+              if (type === "wifi")
+                document.getElementById("wifiText").innerText = settingsState.wifi
+                  ? "Wi-Fi 켜짐"
+                  : "Wi-Fi 꺼짐";
+              else
+                document.getElementById("soundText").innerText = settingsState.sound
+                  ? "벨소리"
+                  : "무음";
+              if (settingsState[type]) btn.classList.add("active");
+              else btn.classList.remove("active");
+            }
+
+            function checkDbConnectionPopup(e) {
+              if (e) e.stopPropagation();
+              let icon = document.getElementById("dbStatusIcon").innerText;
+              alert(
+                icon === "🟢"
+                  ? "파이어베이스 실시간 연결 정상!"
+                  : "연결 상태 확인 필요",
+              );
+      let bgmTracks = [
+        {
+          title: "ambient music lofi #1",
+          src: "Relaxing_Street_lofi_ambient_music.mp3"
+        }
+        // 다른 곡이 더 있다면 여기에 콤마(,)를 쓰고 추가하시면 됩니다
+      ];
+            ];
+            let currentBgmIdx = 0;
+
+            function toggleBgmPlay(e) {
+              if (e) e.stopPropagation();
+              let audio = document.getElementById("bgmAudio");
+              let playBtn = document.getElementById("bgmPlayBtn");
+              let status = document.getElementById("bgmStatus");
+              if (audio.paused) {
+                audio
+                  .play()
+                  .then(() => {
+                    playBtn.innerText = "정지";
+                    status.innerText = "재생 중";
+                    status.style.color = "#34c759";
+                  })
+                  .catch((e) => {
+                    alert("화면 터치 후 재생해주세요!");
+                  });
+              } else {
+                audio.pause();
+                playBtn.innerText = "재생";
+                status.innerText = "정지됨";
+                status.style.color = "#666";
+              }
+            }
+
+            function changeBgmTrack(e) {
+              if (e) e.stopPropagation();
+              currentBgmIdx = (currentBgmIdx + 1) % bgmTracks.length;
+              let audio = document.getElementById("bgmAudio");
+              let track = bgmTracks[currentBgmIdx];
+              document.getElementById("bgmTitle").innerText = "🎵 BGM: " + track.name;
+              audio.src = track.url;
+              audio.play().then(() => {
+                document.getElementById("bgmPlayBtn").innerText = "정지";
+                document.getElementById("bgmStatus").innerText = "재생 중";
+              });
+            }
+
+            db.ref(".info/connected").on("value", (snap) => {
+              let dbIcon = document.getElementById("dbStatusIcon");
+              if (snap.val() === true) {
+                dbIcon.innerText = "🟢";
+              } else {
+                dbIcon.innerText = "🔴";
+              }
+            });
+
+            function openMessenger() {
+              document.getElementById("home").style.display = "none";
+              document.getElementById("chatRoomPage").style.display = "none";
+              document.getElementById("phonePage").style.display = "none";
+              document.getElementById("messengerList").style.display = "flex";
+              renderMessengerMain();
+            }
+            function openPhoneApp() {
+              document.getElementById("home").style.display = "none";
+              document.getElementById("messengerList").style.display = "none";
+              document.getElementById("chatRoomPage").style.display = "none";
+              document.getElementById("phonePage").style.display = "flex";
+              switchPhoneTab("keypad");
+            }
+            function goHome() {
+              document.getElementById("messengerList").style.display = "none";
+              document.getElementById("chatRoomPage").style.display = "none";
+              document.getElementById("phonePage").style.display = "none";
+              document.getElementById("home").style.display = "grid";
+            }
+            function backToList() {
+              document.getElementById("chatRoomPage").style.display = "none";
+              document.getElementById("messengerList").style.display = "flex";
+              renderMessengerMain();
+            }
+
+            function switchPhoneTab(tabName) {
+              document
+                .querySelectorAll(".phone-tab-content")
+                .forEach((el) => el.classList.remove("active"));
+              document
+                .querySelectorAll(".phone-tab-btn")
+                .forEach((el) => el.classList.remove("active"));
+              if (tabName === "keypad") {
+                document.getElementById("phoneTabKeypad").classList.add("active");
+                document.getElementById("tabBtnKeypad").classList.add("active");
+                document.getElementById("phoneHeaderTitle").innerText =
+                  "전화기 - 키패드";
+              } else if (tabName === "contacts") {
+                document.getElementById("phoneTabContacts").classList.add("active");
+                document.getElementById("tabBtnContacts").classList.add("active");
+                document.getElementById("phoneHeaderTitle").innerText =
+                  "전화기 - 연락처";
+                renderPhoneContactsTab();
+              } else if (tabName === "logs") {
+                document.getElementById("phoneTabLogs").classList.add("active");
+                document.getElementById("tabBtnLogs").classList.add("active");
+                document.getElementById("phoneHeaderTitle").innerText =
+                  "전화기 - 통화기록";
+                renderCallLogsTab();
+              }
+            }
+
+            function renderMessengerMain() {
+              renderGroupRoomList();
+              renderFriendList();
+            }
+
+            function renderGroupRoomList() {
+              let container = document.getElementById("groupRoomContainer");
+              container.innerHTML = "";
+              let keys = Object.keys(groupRoomsData);
+              if (keys.length === 0) {
+                container.innerHTML = `<div style="padding: 10px 15px; color:#999; font-size:11px;">생성된 단체방이 없습니다.</div>`;
+                return;
+              }
+              keys.forEach((key) => {
+                let g = groupRoomsData[key];
+                let membersArr = g.members || [];
+                let membersJson = JSON.stringify(membersArr).replace(/"/g, "&quot;");
+                container.innerHTML += `
+                      <div class="room-item" onclick="event.stopPropagation();">
+                          <div class="item-left" onclick="openChatRoom('${g.name}', '👥', 'group', ${membersJson})">
+                              <div class="item-avatar">👥</div>
+                              <div class="item-info">
+                                  <div class="title">${g.name}</div>
+                                  <div class="sub">멤버: ${membersArr.join(", ")}</div>
+                              </div>
+                          </div>
+                          <button class="delete-btn" onclick="deleteGroupRoom('${key}', event)">삭제</button>
+                      </div>
+                  `;
+              });
+            }
+
+            function renderFriendList() {
+              let container = document.getElementById("friendListContainer");
+              container.innerHTML = "";
+              let keys = Object.keys(friendsData);
+              if (keys.length === 0) {
+                container.innerHTML = `<div style="padding: 15px; text-align:center; color:#999; font-size:12px;">등록된 친구가 없습니다.</div>`;
+                return;
+              }
+              keys.forEach((key) => {
+                let f = friendsData[key];
+                let avatarHtml =
+                  f.avatar && f.avatar.startsWith("data:image")
+                    ? `<img src="${f.avatar}">`
+                    : f.avatar || "👤";
+
+                // 데이터 객체를 안전하게 JSON 문자열로 변환하여 아바타 클릭 시 프로필 창 호출
+                let friendObjStr = JSON.stringify(f).replace(/"/g, "&quot;");
+
+                container.innerHTML += `
+                      <div class="friend-item" onclick="event.stopPropagation();">
+                          <div class="item-left">
+                              <div class="item-avatar" onclick="openProfileModal(${friendObjStr}); event.stopPropagation();">${avatarHtml}</div>
+                              <div class="item-info" onclick="openChatRoom('${f.name}', '${f.avatar}', 'single', ['${f.name}'])">
+                                  <div class="title">${f.name}</div>
+                                  <div class="sub">${f.status || "상태 메시지 없음"}</div>
+                              </div>
+                          </div>
+                          <button class="delete-btn" onclick="deleteFriend('${key}', event)">삭제</button>
+                      </div>
+                  `;
+              });
+            }
+
+            // 친구 프로필 모달 관련 함수
+            function openProfileModal(friend) {
+              viewingProfileFriend = friend;
+              let avatarEl = document.getElementById("popProfileAvatar");
+              if (friend.avatar && friend.avatar.startsWith("data:image")) {
+                avatarEl.innerHTML = `<img src="${friend.avatar}">`;
+              } else {
+                avatarEl.innerText = friend.avatar || "👤";
+              }
+              document.getElementById("popProfileName").innerText = friend.name;
+              document.getElementById("popProfilePhone").innerText =
+                friend.phone || "전화번호 없음";
+              document.getElementById("popProfileStatus").innerText = friend.status
+                ? `"${friend.status}"`
+                : "상태 메시지가 없습니다.";
+              document.getElementById("profileModal").style.display = "flex";
+            }
+
+            function closeProfileModal() {
+              document.getElementById("profileModal").style.display = "none";
+            }
+
+            function startChatFromProfile() {
+              if (!viewingProfileFriend) return;
+              closeProfileModal();
+              openChatRoom(
+                viewingProfileFriend.name,
+                viewingProfileFriend.avatar,
+                "single",
+                [viewingProfileFriend.name],
+              );
+            }
+
+            function renderPhoneContactsTab() {
+              let container = document.getElementById("phoneContactListContainer");
+              container.innerHTML = "";
+              let keys = Object.keys(friendsData);
+              if (keys.length === 0) {
+                container.innerHTML = `<div style="padding: 15px; text-align:center; color:#999; font-size:12px;">저장된 연락처가 없습니다.</div>`;
+                return;
+              }
+              keys.forEach((key) => {
+                let f = friendsData[key];
+                let avatarHtml =
+                  f.avatar && f.avatar.startsWith("data:image")
+                    ? `<img src="${f.avatar}">`
+                    : f.avatar || "👤";
+                container.innerHTML += `
+                      <div class="friend-item" onclick="event.stopPropagation();" style="background:#f9f9fb; border-radius:8px; margin-bottom:5px; border:1px solid #e5e5ea;">
+                          <div class="item-left" onclick="makeCallTo('${f.name}', '${f.phone}', '${f.avatar}')">
+                              <div class="item-avatar">${avatarHtml}</div>
+                              <div class="item-info">
+                                  <div class="title">${f.name}</div>
+                                  <div class="sub">${f.phone}</div>
+                              </div>
+                          </div>
+                          <button class="call-action-btn" style="padding:5px 12px; margin:0; font-size:11px;" onclick="makeCallTo('${f.name}', '${f.phone}', '${f.avatar}'); event.stopPropagation();">통화</button>
+                      </div>
+                  `;
+              });
+            }
+
+            function renderCallLogsTab() {
+              let container = document.getElementById("callLogContainer");
+              container.innerHTML = "";
+              if (!callLogsData || callLogsData.length === 0) {
+                container.innerHTML = `<div style="padding: 15px; text-align:center; color:#999; font-size:12px;">통화 기록이 없습니다.</div>`;
+                return;
+              }
+              callLogsData
+                .slice()
+                .reverse()
+                .forEach((log) => {
+                  let logAvatarHtml =
+                    log.avatar && log.avatar.startsWith("data:image")
+                      ? `<img src="${log.avatar}" style="width:20px; height:20px; border-radius:50%; object-fit:cover; vertical-align:middle;">`
+                      : log.avatar || "📞";
+                  container.innerHTML += `
+                      <div class="log-item">
+                          <div class="log-info">
+                              <div class="name">${logAvatarHtml} ${log.name} <span style="font-size:11px; font-weight:normal; color:#666;">(${log.phone})</span></div>
+                              <div class="time">${log.type} · ${log.time} (${log.duration || "00:00"})</div>
+                          </div>
+                          <button class="call-action-btn" style="padding:4px 10px; margin:0; font-size:10px;" onclick="makeCallTo('${log.name}', '${log.phone}', '${log.avatar || "👤"}')">재발신</button>
+                      </div>
+                  `;
+                });
+            }
+
+            function clearCallLogs() {
+              if (confirm("통화 기록을 모두 삭제하시겠습니까?")) {
+                callLogsData = [];
+                saveDataToFirebase();
+              }
+            }
+
+            function deleteFriend(key, event) {
+              event.stopPropagation();
+              if (confirm("삭제하시겠습니까?")) {
+                delete friendsData[key];
+                saveDataToFirebase();
+              }
+            }
+            function deleteGroupRoom(key, event) {
+              event.stopPropagation();
+              if (confirm("방을 삭제하시겠습니까?")) {
+                delete groupRoomsData[key];
+                saveDataToFirebase();
+              }
+            }
+            function deleteCurrentChatRoom() {
+              if (confirm("현재 방을 삭제하시겠습니까?")) {
+                if (currentChatType === "single") {
+                  for (let k in friendsData) {
+                    if (friendsData[k].name === currentChatName) {
+                      delete friendsData[k];
+                      break;
+                    }
+                  }
+                } else {
+                  for (let k in groupRoomsData) {
+                    if (groupRoomsData[k].name === currentChatName) {
+                      delete groupRoomsData[k];
+                      break;
+                    }
+                  }
+                }
+                saveDataToFirebase();
+                backToList();
+              }
+            }
+
+            function showAddModal() {
+              switchAvatarInputTab("emoji");
+              document.getElementById("addModal").style.display = "flex";
+            }
+            function closeAddModal() {
+              document.getElementById("addModal").style.display = "none";
+            }
+
+            function addNewFriend() {
+              let name = document.getElementById("newFriendName").value.trim();
+              if (!name) {
+                alert("이름을 입력하세요!");
+                return;
+              }
+
+              let phone = document.getElementById("newFriendPhone").value;
+              let statusMsg = document.getElementById("newFriendMsg").value;
+
+              if (currentAvatarMode === "emoji") {
+                let emojiVal =
+                  document.getElementById("newFriendAvatarEmoji").value.trim() ||
+                  "👤";
+                saveNewFriendData(name, phone, emojiVal, statusMsg);
+              } else {
+                let fileInput = document.getElementById("newFriendImageFile");
+                if (fileInput.files && fileInput.files[0]) {
+                  let reader = new FileReader();
+                  reader.onload = function (e) {
+                    saveNewFriendData(name, phone, e.target.result, statusMsg);
+                  };
+                  reader.readAsDataURL(fileInput.files[0]);
+                } else {
+                  saveNewFriendData(name, phone, "👤", statusMsg);
+                }
+              }
+            }
+
+            function saveNewFriendData(name, phone, avatarData, statusMsg) {
+              let newKey = db
+                .ref()
+                .child("trpg_sessions/" + currentSession + "/friends")
+                .push().key;
+              friendsData[newKey] = {
+                name: name,
+                phone: phone,
+                avatar: avatarData,
+                status: statusMsg,
+              };
+              saveDataToFirebase();
+              closeAddModal();
+              document.getElementById("newFriendName").value = "";
+              document.getElementById("newFriendMsg").value = "";
+              document.getElementById("newFriendAvatarEmoji").value = "👤";
+              document.getElementById("newFriendImageFile").value = "";
+            }
+
+            function showGroupModal() {
+              if (Object.keys(friendsData).length === 0) {
+                alert("친구가 먼저 있어야 합니다!");
+                return;
+              }
+              let c = document.getElementById("groupMemberCheckList");
+              c.innerHTML = "";
+              Object.values(friendsData).forEach((f) => {
+                let avatarHtml =
+                  f.avatar && f.avatar.startsWith("data:image")
+                    ? `<img src="${f.avatar}" style="width:16px; height:16px; border-radius:50%; object-fit:cover; vertical-align:middle;">`
+                    : f.avatar || "👤";
+                c.innerHTML += `<label style="display:block; margin-bottom:4px;"><input type="checkbox" value="${f.name}"> ${avatarHtml} ${f.name}</label>`;
+              });
+              document.getElementById("groupModal").style.display = "flex";
+            }
+            function closeGroupModal() {
+              document.getElementById("groupModal").style.display = "none";
+            }
+
+            function createGroupRoom() {
+              let name = document.getElementById("newGroupName").value.trim();
+              if (!name) {
+                alert("방 이름을 입력하세요!");
+                return;
+              }
+              let checked = document.querySelectorAll(
+                "#groupMemberCheckList input:checked",
+              );
+              let mems = [];
+              checked.forEach((cb) => mems.push(cb.value));
+              if (mems.length === 0) {
+                alert("멤버를 선택하세요!");
+                return;
+              }
+              let newKey = db
+                .ref()
+                .child("trpg_sessions/" + currentSession + "/groups")
+                .push().key;
+              groupRoomsData[newKey] = { name: name, members: mems };
+              saveDataToFirebase();
+              closeGroupModal();
+              document.getElementById("newGroupName").value = "";
+            }
+
+            function openChatRoom(roomName, avatar, type, members) {
+              currentChatName = roomName;
+              currentChatType = type;
+              currentGroupMembers = [...members];
+              document.getElementById("roomTitle").innerText = roomName;
+              document.getElementById("messengerList").style.display = "none";
+              document.getElementById("chatRoomPage").style.display = "flex";
+
+              // 한마디가 채팅방에 자동으로 들어가지 않도록 초기화 메시지를 비우거나 안내 문구만 처리
+              if (!chatHistories[roomName]) {
+                chatHistories[roomName] = [];
+                saveDataToFirebase();
+              }
+              reloadChatMessages();
+              updateSenderSelectDropdown();
+            }
+
+            function updateSenderSelectDropdown() {
+              let sel = document.getElementById("senderSelect");
+              let html = `<option value="me">나 (플레이어)</option>`;
+              currentGroupMembers.forEach((m) => {
+                html += `<option value="member_${m}">${m}</option>`;
+              });
+              html += `<option value="gm">GM (마스터 연출)</option>`;
+              sel.innerHTML = html;
+            }
+
+            // 채팅 메시지 및 시각 렌더링
+            function reloadChatMessages() {
+              let chatBox = document.getElementById("chatBox");
+              chatBox.innerHTML = "";
+              let msgs = chatHistories[currentChatName] || [];
+
+              msgs.forEach((m, idx) => {
+                let wrap = document.createElement("div");
+                wrap.className = `chat-row-wrapper ${m.type === "me" ? "me" : m.type === "gm" ? "gm" : "other"}`;
+
+                if (m.type !== "me") {
+                  let nd = document.createElement("div");
+                  nd.className = "msg-name";
+                  nd.innerText = m.senderName;
+                  wrap.appendChild(nd);
+                }
+
+                let msgGroup = document.createElement("div");
+                msgGroup.className = "message-group";
+
+                let md = document.createElement("div");
+                md.className = "message";
+                md.innerText = m.text;
+                msgGroup.appendChild(md);
+
+                // 시각 표시 추가
+                let timeStr = m.time || "";
+                if (timeStr) {
+                  let td = document.createElement("div");
+                  td.className = "msg-time";
+                  td.innerText = timeStr;
+                  msgGroup.appendChild(td);
+                }
+
+                let dbn = document.createElement("button");
+                dbn.className = "msg-del-btn";
+                dbn.innerText = "삭제";
+                dbn.onclick = (e) => {
+                  e.stopPropagation();
+                  chatHistories[currentChatName].splice(idx, 1);
+                  saveDataToFirebase();
+                };
+                msgGroup.appendChild(dbn);
+
+                wrap.appendChild(msgGroup);
+                chatBox.appendChild(wrap);
+              });
+              chatBox.scrollTop = chatBox.scrollHeight;
+            }
+
+            function sendMessage() {
+              let input = document.getElementById("msgInput");
+              let text = input.value.trim();
+              if (!text) return;
+
+              let selVal = document.getElementById("senderSelect").value;
+              let sName = "나",
+                sType = "me";
+              if (selVal === "gm") {
+                sName = "[GM 연출]";
+                sType = "gm";
+              } else if (selVal.startsWith("member_")) {
+                sName = selVal.replace("member_", "");
+                sType = "other";
+              }
+
+              // 현재 전송 시각 계산 (오전/오후 HH:mm)
+              let now = new Date();
+              let hours = now.getHours();
+              let minutes = now.getMinutes();
+              let ampm = hours >= 12 ? "오후" : "오전";
+              hours = hours % 12;
+              hours = hours ? hours : 12; // 0시일 경우 12시로 표기
+              let timeFormatted = `${ampm} ${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+
+              if (!chatHistories[currentChatName])
+                chatHistories[currentChatName] = [];
+              chatHistories[currentChatName].push({
+                senderName: sName,
+                text: text,
+                type: sType,
+                time: timeFormatted,
+              });
+
+              saveDataToFirebase();
+              input.value = "";
+            }
+
+            function checkEnter(e) {
+              if (e.key === "Enter") sendMessage();
+            }
+
+            function pressDial(num) {
+              document.getElementById("dialDisplay").innerText += num;
+            }
+
+            let callTimer = null;
+            let callSeconds = 0;
+            let activeCallInfo = { name: "", phone: "", avatar: "" };
+
+            function startCallTimer(callType, name, phone, avatar) {
+              stopCallTimer();
+              callSeconds = 0;
+              activeCallInfo = { name, phone, avatar, type: callType };
+
+              callTimer = setInterval(() => {
+                callSeconds++;
+                let min = String(Math.floor(callSeconds / 60)).padStart(2, "0");
+                let sec = String(callSeconds % 60).padStart(2, "0");
+                document.getElementById("callStatusText").innerText =
+                  `통화 중 (${min}:${sec})`;
+              }, 1000);
+            }
+
+            function stopCallTimer() {
+              if (callTimer) {
+                clearInterval(callTimer);
+                callTimer = null;
+              }
+            }
+
+            function makeCall() {
+              let number = document.getElementById("dialDisplay").innerText;
+              if (!number) {
+                alert("번호를 입력하세요!");
+                return;
+              }
+              let targetName = "알 수 없는 번호",
+                targetAvatar = "👤";
+              Object.values(friendsData).forEach((f) => {
+                if (f.phone === number) {
+                  targetName = f.name;
+                  targetAvatar = f.avatar;
+                }
+              });
+              executeCallProcess(targetName, number, targetAvatar, "발신 통화");
+            }
+
+            function makeCallTo(name, phone, avatar) {
+              executeCallProcess(name, phone, avatar, "발신 통화");
+            }
+
+            function executeCallProcess(name, phone, avatar, type) {
+              document.getElementById("callTargetName").innerText = name;
+              document.getElementById("callTargetPhone").innerText = phone;
+              let callAvatarEl = document.getElementById("callAvatar");
+              if (avatar && avatar.startsWith("data:image")) {
+                callAvatarEl.innerHTML = `<img src="${avatar}">`;
+              } else {
+                callAvatarEl.innerText = avatar || "👤";
+              }
+              document.getElementById("callStatusText").innerText = "발신 중...";
+              document.getElementById("acceptCallBtn").style.display = "none";
+              document.getElementById("callScreen").style.display = "flex";
+
+              setTimeout(() => {
+                if (document.getElementById("callScreen").style.display === "flex") {
+                  startCallTimer(type, name, phone, avatar);
+                }
+              }, 2000);
+            }
+
+            function triggerIncomingCall(name, phone, avatar) {
+              stopCallTimer();
+              activeCallInfo = {
+                name,
+                phone,
+                avatar: avatar || "👤",
+                type: "수신 통화",
+              };
+              document.getElementById("callTargetName").innerText = name;
+              document.getElementById("callTargetPhone").innerText = phone;
+              let callAvatarEl = document.getElementById("callAvatar");
+              if (
+                activeCallInfo.avatar &&
+                activeCallInfo.avatar.startsWith("data:image")
+              ) {
+                callAvatarEl.innerHTML = `<img src="${activeCallInfo.avatar}">`;
+              } else {
+                callAvatarEl.innerText = activeCallInfo.avatar || "👤";
+              }
+              document.getElementById("callStatusText").innerText =
+                "전화가 오는 중...";
+              document.getElementById("acceptCallBtn").style.display = "flex";
+              document.getElementById("callScreen").style.display = "flex";
+            }
+
+            function acceptCall() {
+              document.getElementById("acceptCallBtn").style.display = "none";
+              startCallTimer(
+                activeCallInfo.type,
+                activeCallInfo.name,
+                activeCallInfo.phone,
+                activeCallInfo.avatar,
+              );
+            }
+
+            function endCall() {
+              if (callTimer) {
+                let min = String(Math.floor(callSeconds / 60)).padStart(2, "0");
+                let sec = String(callSeconds % 60).padStart(2, "0");
+                let durationStr = `${min}:${sec}`;
+                let nowTime =
+                  String(new Date().getHours()).padStart(2, "0") +
+                  ":" +
+                  String(new Date().getMinutes()).padStart(2, "0");
+
+                callLogsData.push({
+                  name: activeCallInfo.name,
+                  phone: activeCallInfo.phone,
+                  avatar: activeCallInfo.avatar,
+                  type: activeCallInfo.type,
+                  time: nowTime,
+                  duration: durationStr,
+                });
+                saveDataToFirebase();
+              }
+              stopCallTimer();
+              document.getElementById("callScreen").style.display = "none";
+              document.getElementById("dialDisplay").innerText = "";
+            }
+
+            setInterval(() => {
+              let now = new Date();
+              document.getElementById("clock").innerText =
+                String(now.getHours()).padStart(2, "0") +
+                ":" +
+                String(now.getMinutes()).padStart(2, "0");
+            }, 1000);
+    </script>
+  </body>
+</html>
